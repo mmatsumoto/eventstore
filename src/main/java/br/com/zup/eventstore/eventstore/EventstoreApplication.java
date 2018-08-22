@@ -3,6 +3,7 @@ package br.com.zup.eventstore.eventstore;
 import br.com.zup.eventstore.eventstore.event.AccountCreatedEvent;
 import br.com.zup.eventstore.eventstore.event.MoneyDepositedEvent;
 import br.com.zup.eventstore.eventstore.event.MoneyWithdrawEvent;
+import br.com.zup.eventstore.eventstore.util.ResolvedEventUtil;
 import com.github.msemys.esjc.EventData;
 import com.github.msemys.esjc.EventStore;
 import com.github.msemys.esjc.ExpectedVersion;
@@ -88,7 +89,7 @@ public class EventstoreApplication {
                     .events
                     .stream()
                     .sorted(Comparator.comparing(o -> o.event.eventNumber))
-                    .forEach(this::printResolvedEvent);
+                    .forEach(ResolvedEventUtil::printResolvedEvent);
         };
     }
 
@@ -100,16 +101,8 @@ public class EventstoreApplication {
             eventStore.streamEventsForward("accounts", 0L, 1000, false)
                     .filter(e -> e.event.eventType.equals(AccountCreatedEvent.class.getName()))
                     .sorted(Comparator.comparing(o -> o.event.eventNumber))
-                    .forEach(this::printResolvedEvent);
+                    .forEach(ResolvedEventUtil::printResolvedEvent);
         };
-    }
-
-    private void printResolvedEvent(ResolvedEvent e) {
-        log.info("@{} - id:'{}' type: '{}'; data: '{}'\n",
-                 e.originalEventNumber(),
-                 e.originalEvent().eventId,
-                 e.originalEvent().eventType,
-                 new String(e.originalEvent().data));
     }
 
     private String eventsToString(List<EventData> events) {
