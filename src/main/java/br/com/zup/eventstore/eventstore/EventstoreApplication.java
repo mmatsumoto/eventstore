@@ -3,11 +3,10 @@ package br.com.zup.eventstore.eventstore;
 import br.com.zup.eventstore.eventstore.event.AccountCreatedEvent;
 import br.com.zup.eventstore.eventstore.event.MoneyDepositedEvent;
 import br.com.zup.eventstore.eventstore.event.MoneyWithdrawEvent;
-import br.com.zup.eventstore.eventstore.util.ResolvedEventUtil;
+import br.com.zup.eventstore.eventstore.util.EventUtil;
 import com.github.msemys.esjc.EventData;
 import com.github.msemys.esjc.EventStore;
 import com.github.msemys.esjc.ExpectedVersion;
-import com.github.msemys.esjc.ResolvedEvent;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -19,8 +18,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import static br.com.zup.eventstore.eventstore.util.EventUtil.eventsToString;
 import static br.com.zup.eventstore.eventstore.util.JsonUtil.objectToJson;
 import static java.util.Arrays.asList;
 
@@ -89,7 +88,7 @@ public class EventstoreApplication {
                     .events
                     .stream()
                     .sorted(Comparator.comparing(o -> o.event.eventNumber))
-                    .forEach(ResolvedEventUtil::printResolvedEvent);
+                    .forEach(EventUtil::printResolvedEvent);
         };
     }
 
@@ -101,15 +100,8 @@ public class EventstoreApplication {
             eventStore.streamEventsForward("accounts", 0L, 1000, false)
                     .filter(e -> e.event.eventType.equals(AccountCreatedEvent.class.getName()))
                     .sorted(Comparator.comparing(o -> o.event.eventNumber))
-                    .forEach(ResolvedEventUtil::printResolvedEvent);
+                    .forEach(EventUtil::printResolvedEvent);
         };
-    }
-
-    private String eventsToString(List<EventData> events) {
-        return events.stream()
-                .map(e -> new String(e.data))
-                .collect(Collectors.toList())
-                .toString();
     }
 
 }
