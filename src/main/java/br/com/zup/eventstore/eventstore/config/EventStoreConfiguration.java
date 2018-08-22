@@ -9,10 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -34,7 +33,8 @@ public class EventStoreConfiguration {
     @Value("${eventstore.password:changeit}")
     private String password;
 
-    private final List<CompletableFuture<Subscription>> subscriptions = new ArrayList<>();
+    private List<CompletableFuture<Subscription>> subscriptions = new LinkedList<>();
+
 
     @Bean
     public EventStore eventStore() {
@@ -45,20 +45,20 @@ public class EventStoreConfiguration {
     }
 
     @Autowired
-    @Order(501)
-    public void accountVolatileListener(EventStore eventStore, AccountVolatileListener accountVolatileListener) {
+    public void accountVolatileListener(EventStore eventStore, AccountVolatileListener accountVolatileListener) throws ExecutionException, InterruptedException {
         subscriptions.add(eventStore.subscribeToStream("accounts", false, accountVolatileListener));
     }
 
+
     @PreDestroy
-    public void closeListeners() throws ExecutionException, InterruptedException {
+    public void closeListeners() {
+        log.info("Closing subscriptions connections number={}", subscriptions.size());
         subscriptions.forEach(s -> {
             try {
                 s.get().close();
             } catch (Exception e) {
-                log.error("Error trying to close the Event Store Subscrption Listener. {}", s.toString(), e);
+                log.error("Error trying to close the subscription connection. ", e);
             }
         });
     }
-
 }
